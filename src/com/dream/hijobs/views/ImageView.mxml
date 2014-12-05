@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" width="250" height="280"
+		  horizontalAlign="center" verticalAlign="middle">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.dream.hijobs.utils.Constants;
+			import com.dream.hijobs.utils.HijobsEvent;
+			
+			import mx.controls.Alert;
+			private var _url:Image;
+			private var _f:FileReference;
+			//服务器地址
+			private var urlRequest: URLRequest = new URLRequest(Constants.prefixFileUrl);
+			private var variables:URLVariables=new  URLVariables();
+
+			public function get f():FileReference
+			{
+				return _f;
+			}
+
+			public function set f(value:FileReference):void
+			{
+				_f = value;
+				uploadFile();
+			}
+
+			[Bindable]
+			public function get url():Image
+			{
+				return _url;
+			}
+
+			public function set url(value:Image):void
+			{
+				_url = value;
+			}
+
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+//				this.removeAllElements();
+				HijobsEvent.dis.dispatchEvent(new HijobsEvent(HijobsEvent.IMAGEVIEW_DELETE,false,false,this));
+			}
+			
+			private function initProgressBar(event: Event): void{
+				//使progressbar与file关联，从而产生进度条
+				var pb: ProgressBar = event.target as ProgressBar;
+				pb.label = "%3%%";
+				pb.setProgress(0, 100);
+				//使用闭包方法，更新进度条
+				f.addEventListener(ProgressEvent.PROGRESS,function(event: ProgressEvent): void{
+						pb.setProgress(event.bytesLoaded, event.bytesTotal);
+					}
+				);
+				f.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA,function (event: DataEvent): void{
+						//服务器端一定要返回数据，否则，这个方法就不起作用了
+						if(event.data["rc"]["code"] > -1){
+							pb.label = event.data;
+						}else{
+							Alert.show(event.data["rc"]["message"],"警告",Alert.OK);
+						}
+					}
+				);                                           
+			}
+			
+			public function uploadFile(): void {
+				variables.tk = Constants.token;
+				urlRequest.data=variables; 
+				try{
+					f.upload(urlRequest);
+				}catch (e: Error){
+					Alert.show(e.message);
+				}
+			}
+		]]>
+	</fx:Script>
+	<s:Group width="250" height="250">
+		<mx:ProgressBar x="0" width="100%" label="%3%%" creationComplete="initProgressBar(event)" labelPlacement="center" 
+						maximum="100" minimum="0" mode="manual" paddingLeft="5" paddingRight="5" textAlign="left" verticalCenter="0"/>
+		<s:Image id="image" source="{url}" width="250" height="250"/>
+	</s:Group>
+	<s:Button label="删除" click="button1_clickHandler(event)"/>
+</s:VGroup>

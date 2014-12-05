@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx" 
+					   title="hijob 管理系统"
+					   contentCreationComplete="windowedapplication1_contentCreationCompleteHandler(event)" xmlns:views="com.dream.hijobs.views.*">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			[Bindable]
+			private var buttonBar:ArrayCollection=new ArrayCollection(["用户","职位","公司"]);
+			
+			private var token:String = "9Xl7nfhAnfVult5mk1Kd0NKlmOKdWSGHuLWKRMafulLAvibvTsGYEYBNSMRCNhz5jAzcKL1jZijSIfG4nQ6mmFNwe60+9TZyJ28GsMdRlhw=";
+			
+			protected function windowedapplication1_contentCreationCompleteHandler(event:FlexEvent):void {
+				this.maximize();
+			}
+		]]>
+	</fx:Script>
+	<s:VGroup width="100%" height="100%">
+		<s:ButtonBar id="bar" dataProvider="{buttonBar}" selectedIndex="0" height="30" width="100%" requireSelection="true"/>
+		<s:Group width="100%" height="100%"> 
+			<views:UserView width="100%" height="100%" visible="{bar.selectedIndex==0}"/>
+			<views:JobView width="100%" height="100%" visible="{bar.selectedIndex==1}"/>
+			<views:CompanyView width="100%" height="100%" visible="{bar.selectedIndex==2}"/>
+		</s:Group>
+	</s:VGroup>
+		
+</s:WindowedApplication>

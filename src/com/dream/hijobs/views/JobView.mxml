@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.dream.hijobs.utils.HttpConnection;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.utils.StringUtil;
+			protected function jobSearch(event:*):void
+			{
+				var key:String = StringUtil.trim(jobKey.text);
+				var obj:Object={key:key};
+				
+				HttpConnection.request("job/page/1",obj,searchHandler);  
+			}
+			
+			public function searchHandler(obj:Object):void
+			{
+				if(obj.rc.code>-1){
+					jobDG.dataProvider = new ArrayCollection(obj.value.list);
+				}else{
+					Alert.show(obj.rc.message,"错误",Alert.OK);
+				}
+			}
+		]]>
+	</fx:Script>
+
+	<s:HGroup width="100%">
+		<s:HGroup width="100%" left="0">
+			<s:TextInput id="jobKey" width="200" prompt="请输入职位名..." restrict="0-9"/>
+			<s:Button label="搜索职位" click="jobSearch(event)"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Button label="添加职位"/>
+			<s:Button label="编辑职位"/>
+			<s:Button label="删除职位"/>
+		</s:HGroup>
+	</s:HGroup>
+	<mx:DataGrid id="jobDG" height="100%" width="100%"/>
+</s:VGroup>

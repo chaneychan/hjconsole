@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  width="534" height="336" initialize="init()" title="上传">
+	
+	<fx:Declarations>
+		<mx:NumberFormatter id="filesizeFormatter" useThousandsSeparator="true"/>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.dream.hijobs.utils.Constants;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.formatters.NumberFormatter;
+			private var fileRefs: FileReferenceList = new FileReferenceList();
+			//服务器地址
+			public var urlrequest: URLRequest = new URLRequest(Constants.prefixFileUrl);
+			//				 urlrequest.method=URLRequestMethod.POST;
+			
+			private var variables:URLVariables=new  URLVariables();
+			
+			private var _maxImageNum:int;
+			
+			[Bindable]
+			private var selectedFiles: ArrayCollection = new ArrayCollection([]);
+			private var singleThreadFiles: Array = [];
+			[Bindable]
+			private var useSingleThread: Boolean = true;
+
+			public function get maxImageNum():int
+			{
+				return _maxImageNum;
+			}
+
+			public function set maxImageNum(value:int):void
+			{
+				_maxImageNum = value;
+			}
+
+			private function init(): void
+			{
+				variables.tk = Constants.token;
+				urlrequest.data=variables; 
+				fileRefs.addEventListener(Event.SELECT, fileSelectHandler);
+				fileRefs.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);   
+			}
+			private function selectFile(): void
+			{
+				fileRefs.browse([new FileFilter("Images (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg;*.jpeg;*.gif;*.png"),
+					new FileFilter("所有文件(*.*)", "*.*")
+				]);
+			}
+			private function fileSelectHandler(event: Event): void
+			{
+				if(fileRefs.fileList.length > maxImageNum){
+					Alert.show("上传数量不能超过 "+maxImageNum+" 张","警告",Alert.OK);
+					return;
+				}
+				for each (var f: FileReference in fileRefs.fileList)
+				{
+					if(!selectedFiles.contains(f)){
+						selectedFiles.addItem(f);
+					}
+				}
+			}
+			private function uploadFile(): void
+			{               
+				for each (var f: FileReference in selectedFiles)
+				{           
+					try
+					{
+						f.upload(urlrequest);
+					}
+					catch (e: Error)
+					{
+						Alert.show(e.message);
+					}
+				}               
+			}
+			private function ioErrorHandler(e:IOErrorEvent): void
+			{
+				Alert.show(e.text);
+			}
+			public function removeFile(f: FileReference): void
+			{
+				var index: int = selectedFiles.getItemIndex(f);
+				if (index != -1)
+					selectedFiles.removeItemAt(index);
+			}
+		]]>
+	</fx:Script>
+	
+	<s:VGroup width="100%" height="100%">
+		<mx:VBox width="100%" height="100%">
+			<mx:HBox width="100%">
+				<mx:Button id="selectFileButton" label="浏览" click="selectFile()"/>
+				<mx:Box width="100%" horizontalAlign="right">
+					<mx:Button label="清空" click="selectedFiles.removeAll();"/>
+				</mx:Box>
+			</mx:HBox>
+			<mx:DataGrid id="files" width="100%" height="100%" dataProvider="{selectedFiles}">
+				<mx:columns>
+					<mx:DataGridColumn width="150" dataField="name" headerText="文件名"/>
+					<mx:DataGridColumn dataField="size" headerText="大小(字节)">
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:Label text="{outerDocument.filesizeFormatter.format(data.size)}" textAlign="right"/>
+							</fx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn width="300" headerText="上传进度">
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:HBox fontSize="10" fontThickness="1" fontWeight="normal">
+									<fx:Script>
+										<![CDATA[
+											import flash.profiler.showRedrawRegions;
+											
+											import mx.controls.Alert;
+											import mx.controls.ProgressBar;
+											private function initProgressBar(event: Event): void
+											{
+												//使progressbar与file关联，从而产生进度条
+												var pb: ProgressBar = event.target as ProgressBar;
+												pb.label = "%3%%";
+												pb.setProgress(0, 100);
+												var f: FileReference = data as FileReference;
+												//使用闭包方法，更新进度条
+												f.addEventListener(ProgressEvent.PROGRESS,
+													function(event: ProgressEvent): void
+													{
+														pb.setProgress(event.bytesLoaded, event.bytesTotal);
+													}
+												);
+												f.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA,
+													function (event: DataEvent): void
+													{
+														//服务器端一定要返回数据，否则，这个方法就不起作用了
+														if(event.data["rc"]["code"] > -1){
+															pb.label = event.data;
+														}else{
+															Alert.show(event.data["rc"]["message"],"警告",Alert.OK);
+														}
+													}
+												);                                           
+											}
+										]]>
+									</fx:Script>
+									<mx:ProgressBar width="100%" label="%3%%"
+													creationComplete="initProgressBar(event)"
+													labelPlacement="center" maximum="100"
+													minimum="0" mode="manual" paddingLeft="5"
+													paddingRight="5" textAlign="left"
+													verticalCenter="true"/>
+									<mx:LinkButton label="Cancel">
+										<mx:click>
+											<![CDATA[
+											var f: FileReference = data as FileReference;
+											f.cancel();
+											]]>
+										</mx:click>
+									</mx:LinkButton>
+									<mx:LinkButton label="Delete">
+										<mx:click>
+											<![CDATA[
+											var f: FileReference = data as FileReference;
+											outerDocument.removeFile(f);
+											]]>
+										</mx:click>
+									</mx:LinkButton>
+								</mx:HBox>
+							</fx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:VBox>
+		<s:HGroup width="100%">
+			<s:Button label="上传" click="uploadFile()"/>
+		</s:HGroup>
+	</s:VGroup>
+</s:TitleWindow>

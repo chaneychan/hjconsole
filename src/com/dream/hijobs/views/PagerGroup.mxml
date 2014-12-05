@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:HGroup xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" 
+		  width="100%" horizontalAlign="right" verticalAlign="middle" paddingRight="20">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			
+			import spark.events.IndexChangeEvent;
+
+			[Bindable]
+			private var totalPage:int;
+
+			[Bindable]
+			public function get totalCount():int
+			{
+				return _totalCount;
+			}
+
+			public function set totalCount(value:int):void
+			{
+				_totalCount = value;
+				totalPage=(_totalCount % 20 == 0) ? _totalCount / 20 : _totalCount / 20 + 1;
+				var pages:Array=[];
+				for (var i:int = 1; i <= totalPage; i++) 
+				{
+					pages.push(i);
+				}
+				goPage.dataProvider=new ArrayCollection(pages);
+			}
+
+			public var fun:Function;
+			
+			private var _totalCount:int;
+			
+			protected function pre_clickHandler(event:MouseEvent):void {
+				var currentPage:int = goPage.selectedIndex +1;
+				if(currentPage-1 < 1){
+					Alert.show("已经是第一页","警告",Alert.OK);
+				}else{
+					fun(currentPage-1);
+				}
+			}
+			
+			protected function next_clickHandler(event:MouseEvent):void
+			{
+				var currentPage:int = goPage.selectedIndex +1;
+				if(currentPage + 1 > totalPage){
+					Alert.show("已经是最后一页","警告",Alert.OK);
+				}else{
+					fun(currentPage+1);
+				}
+			}
+			
+			protected function goPage_changeHandler(event:IndexChangeEvent):void
+			{
+				var currentPage:int = goPage.selectedIndex +1;
+				fun(currentPage);				
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Label textAlign="center" text="总共 {totalPage} 页"/>
+	<s:DropDownList id="goPage" change="goPage_changeHandler(event)" width="60"/>
+	<s:Button id="pre" label="上一页" click="pre_clickHandler(event)"/>
+	<s:Button id="next" label="下一页" click="next_clickHandler(event)"/>
+</s:HGroup>

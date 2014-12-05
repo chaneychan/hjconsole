@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" 
+		 xmlns:views="com.dream.hijobs.views.*" creationComplete="vgroup1_creationCompleteHandler(event)">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.dream.hijobs.domain.UserDTO;
+			import com.dream.hijobs.utils.Constants;
+			import com.dream.hijobs.utils.DateUtils;
+			import com.dream.hijobs.utils.HttpConnection;
+			import com.dream.hijobs.utils.Utils;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.utils.StringUtil;
+			
+			protected function userSearch(event:*):void
+			{
+				searchFun(1);
+			}
+			
+			public function searchFun(currentPage:int):void{
+				var key:String = StringUtil.trim(userKey.text);
+				var obj:Object={key:key,tk:Constants.token};
+				
+				HttpConnection.request("user/page/"+currentPage,obj,function searchHandler(obj:Object):void{
+					if(obj.rc.code>-1){
+						pg.goPage.selectedIndex = currentPage-1;
+						userDG.dataProvider = obj.value.list;
+						pg.totalCount = obj.value.totalCount;
+					}else{
+						Alert.show(obj.rc.message,"错误",Alert.OK);
+					}
+				});  
+			}
+			
+			protected function vgroup1_creationCompleteHandler(event:FlexEvent):void
+			{
+				pg.fun=searchFun;
+			}
+			
+			protected function regUser(event:MouseEvent):void
+			{
+				var obj:UserDTO=new UserDTO();
+				obj.email="jian_zm@163.com";
+				HttpConnection.request("user/reg",obj,function reg(obj:Object):void{
+					if(obj.rc.code>-1){
+						Alert.show(obj.rc.value,"token",Alert.OK);
+					}else{
+						Alert.show(obj.rc.message,"错误",Alert.OK);
+					}
+				},URLRequestMethod.POST);				
+			}
+			
+			protected function editUser(event:MouseEvent):void
+			{
+				var obj:Object=new Object;
+				obj["email"]="jian_zm@163.com";
+				obj["_method"]="put";
+				HttpConnection.request("user",obj,function reg(obj:Object):void{
+					if(obj.rc.code>-1){
+						Alert.show(obj.rc.value,"token",Alert.OK);
+					}else{
+						Alert.show(obj.rc.message,"错误",Alert.OK);
+					}
+				},URLRequestMethod.POST);				
+			}
+			
+		]]>
+	</fx:Script>
+	<s:HGroup width="100%">
+		<s:TextInput id="userKey" width="200" prompt="请输入电话号码..." restrict="0-9"/>
+		<s:Button label="搜索用户" click="userSearch(event)"/>
+		<s:Button label="注册用户" click="regUser(event)"/>
+		<s:Button label="编辑用户" click="editUser(event)"/>
+	</s:HGroup>
+	<mx:DataGrid id="userDG" height="100%" width="100%">
+		<mx:columns>
+			<mx:DataGridColumn dataField="mobile"/>
+			<mx:DataGridColumn dataField="name"/>
+			<mx:DataGridColumn dataField="nick"/>
+			<mx:DataGridColumn dataField="avatar"/>
+			<mx:DataGridColumn dataField="hukou"/>
+			<mx:DataGridColumn dataField="residence"/>
+			<mx:DataGridColumn dataField="openId"/>
+			<mx:DataGridColumn dataField="lassLogin"/>
+			<mx:DataGridColumn dataField="devType"/>
+			<mx:DataGridColumn dataField="email"/>
+			<mx:DataGridColumn dataField="gmtCreated" labelFunction="{Utils.dateFormatFunction}"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<views:PagerGroup width="100%" id="pg"/>
+</s:VGroup>
