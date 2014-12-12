@@ -2,7 +2,7 @@
 <s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		  xmlns:s="library://ns.adobe.com/flex/spark" 
 		  xmlns:mx="library://ns.adobe.com/flex/mx" width="250" height="280"
-		  horizontalAlign="center" verticalAlign="middle">
+		  horizontalAlign="center" verticalAlign="middle" creationComplete="initProgressBar(event)">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 	</fx:Declarations>
@@ -11,10 +11,14 @@
 		<![CDATA[
 			import com.dream.hijobs.utils.Constants;
 			import com.dream.hijobs.utils.HijobsEvent;
+			import com.dream.hijobs.utils.StringUtils;
 			
 			import mx.controls.Alert;
-			private var _url:Image;
+			private var _url:String;
 			private var _f:FileReference;
+			
+			public var currentImage:ImageView=this as ImageView;
+			
 			//服务器地址
 			private var urlRequest: URLRequest = new URLRequest(Constants.prefixFileUrl);
 			private var variables:URLVariables=new  URLVariables();
@@ -31,25 +35,29 @@
 			}
 
 			[Bindable]
-			public function get url():Image
+			public function get url():String
 			{
 				return _url;
 			}
 
-			public function set url(value:Image):void
+			public function set url(value:String):void
 			{
-				_url = value;
+				if(!StringUtils.isBlank(value)){
+					_url = value;
+					image.source = Constants.prefixFileUrl+_url;
+				}
 			}
 
 			protected function button1_clickHandler(event:MouseEvent):void
 			{
 //				this.removeAllElements();
-				HijobsEvent.dis.dispatchEvent(new HijobsEvent(HijobsEvent.IMAGEVIEW_DELETE,false,false,this));
+				HijobsEvent.dis.dispatchEvent(new HijobsEvent(HijobsEvent.IMAGEVIEW_DELETE,false,false,currentImage));
 			}
 			
 			private function initProgressBar(event: Event): void{
+				if(f == null) return;
+				addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
 				//使progressbar与file关联，从而产生进度条
-				var pb: ProgressBar = event.target as ProgressBar;
 				pb.label = "%3%%";
 				pb.setProgress(0, 100);
 				//使用闭包方法，更新进度条
@@ -59,30 +67,40 @@
 				);
 				f.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA,function (event: DataEvent): void{
 						//服务器端一定要返回数据，否则，这个方法就不起作用了
-						if(event.data["rc"]["code"] > -1){
-							pb.label = event.data;
+						if(StringUtils.isNotBlank(event.data)){
+//							pb.label = event.data;
+							url=event.data;
 						}else{
-							Alert.show(event.data["rc"]["message"],"警告",Alert.OK);
+							Alert.show(event.data,"警告",Alert.OK);
 						}
 					}
-				);                                           
+				);       
+				f.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
 			}
 			
-			public function uploadFile(): void {
+			private function ioErrorHandler(e:IOErrorEvent): void{
+				Alert.show(e.text);
+			}
+			
+			private function uploadFile(): void {
 				variables.tk = Constants.token;
 				urlRequest.data=variables; 
-				try{
+//				urlRequest.method=URLRequestMethod.POST;
+				try
+				{
 					f.upload(urlRequest);
-				}catch (e: Error){
-					Alert.show(e.message);
+				}
+				catch(error:Error) 
+				{
+					trace("Unable to upload file.");
 				}
 			}
 		]]>
 	</fx:Script>
 	<s:Group width="250" height="250">
-		<mx:ProgressBar x="0" width="100%" label="%3%%" creationComplete="initProgressBar(event)" labelPlacement="center" 
+		<mx:ProgressBar x="0" width="100%" label="%3%%" labelPlacement="center" id="pb"
 						maximum="100" minimum="0" mode="manual" paddingLeft="5" paddingRight="5" textAlign="left" verticalCenter="0"/>
-		<s:Image id="image" source="{url}" width="250" height="250"/>
+		<s:Image id="image" width="250" height="250"/>
 	</s:Group>
 	<s:Button label="删除" click="button1_clickHandler(event)"/>
 </s:VGroup>

@@ -10,10 +10,10 @@ package com.dream.hijobs.utils
 		
 		public static const IMAGEVIEW_DELETE:String = "imageview_delete";
 		
-		public function HijobsEvent(type:String, bubbles:Boolean=false, cancelable:Boolean=false ,date:Object = null)
+		public function HijobsEvent(type:String, bubbles:Boolean=false, cancelable:Boolean=false ,_date:Object = null)
 		{
 			super(type, bubbles, cancelable);
-			this.data = data;  
+			this.data = _date;  
 		}
 	}
 }

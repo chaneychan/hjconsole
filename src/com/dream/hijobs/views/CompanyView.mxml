@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
-		  xmlns:s="library://ns.adobe.com/flex/spark" 
-		  xmlns:mx="library://ns.adobe.com/flex/mx" 
-		  width="100%" height="100%" xmlns:views="com.dream.hijobs.views.*"
-		  creationComplete="vgroup1_creationCompleteHandler(event)">
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="978" height="472" 
+			   creationComplete="titlewindow1_creationCompleteHandler(event)"
+			   close="titlewindow1_closeHandler(event)">
 	<fx:Declarations>
-		
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 	</fx:Declarations>
 	<fx:Script>
 		<![CDATA[
@@ -14,7 +15,6 @@
 			import com.dream.hijobs.utils.HijobsEvent;
 			import com.dream.hijobs.utils.HttpConnection;
 			import com.dream.hijobs.utils.StringUtils;
-			import com.dream.hijobs.utils.Utils;
 			
 			import mx.controls.Alert;
 			import mx.core.IVisualElement;
@@ -22,71 +22,49 @@
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
-			import mx.utils.ArrayUtil;
 			import mx.utils.StringUtil;
-			
-			import spark.components.Image;
 			
 			private	var fileRefs: FileReferenceList = new FileReferenceList();
 			private var hasImageNum:int=0;
+			private var _company:Object;
 			
-			protected function companySearch(event:*):void
+			public function get company():Object
 			{
-				searchFun(1);
+				return _company;
 			}
-			
-			public function searchFun(currentPage:int):void{
-				var key:String = StringUtil.trim(companyKey.text);
-				var obj:Object={key:key,tk:Constants.token};
-				
-				HttpConnection.request("company/page/"+currentPage,obj,function(obj:Object):void{
-					if(obj.rc.code>-1){
-						pg.goPage.selectedIndex = currentPage-1;
-						companyDG.dataProvider = obj.value.list;
-						pg.totalCount = obj.value.totalCount;
-					}else{
-						Alert.show(obj.rc.message,"错误",Alert.OK);
-					}
-				});  
-			}
-			
-			protected function companyDG_changeHandler(event:ListEvent):void
+
+			public function set company(value:Object):void
 			{
-				hasImageNum=0;
-				images.visible=true;
-				images.includeInLayout=true;
-				var num:int = images.numElements;
-				for (var i:int = 0; i < num; i++) {
-					var element:IVisualElement = images.getElementAt(i);
-					if(element is Image){
-						images.removeElement(element);
+				if(value==null){
+					title="公司-添加"
+				}else{
+					title="公司-编辑"
+					_company = value;
+					fullName.text=value["fullName"];
+					mobile.text=value["mobile"];
+					tel.text=value["tel"];
+					address.text=value["address"];
+					size.text=value["size"];
+					nature.text=value["nature"];
+					industry.text=value["industry"];
+					profile.text=value["profile"];
+					var imageUrls:String=value["imageUrls"];
+					if(imageUrls != null){
+						var arr:Array=imageUrls.split("|");
+						for each (var url:String in arr) {
+							if(StringUtils.isNotBlank(url)){
+								var image:ImageView=new ImageView();
+								image.url=url;
+								images.addElement(image);
+								hasImageNum++
+							}
+						}
 					}
 				}
-				
-				var obj:Object = companyDG.selectedItem;
-				fullName.text=obj["fullName"];
-				mobile.text=obj["mobile"];
-				tel.text=obj["tel"];
-				address.text=obj["address"];
-				size.text=obj["size"];
-				nature.text=obj["nature"];
-				industry.text=obj["industry"];
-				profile.text=obj["profile"];
-				var arr:Array=obj["imageUrls"].toString().split("|");
-				for each (var url:String in arr) {
-					if(StringUtils.isNotBlank(url)){
-						var imageUrl:String = Constants.prefixFileUrl+url;
-						var image:Image=new Image();
-						image.width=250;
-						image.height=250;
-						image.source=imageUrl;
-						images.addElement(image);
-						hasImageNum++
-					}
-				}
+					
 			}
-			
-			protected function add_clickHandler(event:MouseEvent):void
+
+			protected function add_clickHandler(event:MouseEvent=null):void
 			{
 				HttpConnection.request("company",getCompanyInfo(),function(obj:Object):void{
 					if(obj.rc.code>-1){
@@ -95,90 +73,6 @@
 						Alert.show(obj.rc.message,"错误",Alert.OK);
 					}
 				},URLRequestMethod.POST);
-			}
-			
-			protected function vgroup1_creationCompleteHandler(event:FlexEvent):void
-			{
-				pg.fun=searchFun;
-				fileRefs.addEventListener(Event.SELECT, fileSelectHandler);
-				HijobsEvent.dis.addEventListener(HijobsEvent.IMAGEVIEW_DELETE,deleteImageView);
-			}
-			
-			private function deleteImageView(event:HijobsEvent):void{
-				var num:int = images.numElements;
-				hasImageNum = 0;
-				for (var i:int = 0; i < num; i++) {
-					var element:IVisualElement = images.getElementAt(i);
-					if(element is ImageView){
-						hasImageNum++;
-					}
-				}
-			}
-			
-			protected function edit_clearHandler(event:Event):void
-			{
-				var company:CompanyDTO = getCompanyInfo();
-				company._method = URLRequestMethod.PUT;
-				HttpConnection.request("company/"+companyDG.selectedItem["id"],company,function(obj:Object):void{
-					if(obj.rc.code>-1){
-						Alert.show("公司修改成功","提示",Alert.OK);
-					}else{
-						Alert.show(obj.rc.message,"错误",Alert.OK);
-					}
-				},URLRequestMethod.POST);		
-			}
-			
-			private function getCompanyInfo():CompanyDTO{
-				var company:CompanyDTO = new CompanyDTO();
-				company.fullName = StringUtil.trim(fullName.text);
-				company.mobile = StringUtil.trim(mobile.text);
-				company.tel = StringUtil.trim(tel.text);
-				company.address = StringUtil.trim(address.text);
-				company.size = StringUtil.trim(size.text);
-				company.nature = StringUtil.trim(nature.text);
-				company.industry = StringUtil.trim(industry.text);
-				company.profile = StringUtil.trim(profile.text);
-				return company;
-			}
-			
-			protected function delete_clickHandler(event:MouseEvent):void
-			{
-				HttpConnection.request("company/"+companyDG.selectedItem["id"],{_method:URLRequestMethod.DELETE},function(obj:Object):void{
-					if(obj.rc.code>-1){
-						Alert.show("公司删除成功","提示",Alert.OK);
-					}else{
-						Alert.show(obj.rc.message,"错误",Alert.OK);
-					}
-				},URLRequestMethod.POST);		
-			}
-			
-			protected function addImage_clickHandler(event:MouseEvent):void
-			{
-				var num:int = images.numElements;
-				hasImageNum = 0;
-				for (var i:int = 0; i < num; i++) {
-					var element:IVisualElement = images.getElementAt(i);
-					if(element is ImageView){
-						hasImageNum++;
-					}
-				}
-
-				if(hasImageNum>=Constants.maxUploadImageNum){
-					Alert.show("上传数量不能超过 "+Constants.maxUploadImageNum+" 张","警告",Alert.OK);
-					return;
-				}
-				
-				fileRefs.browse([new FileFilter("Images (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg;*.jpeg;*.gif;*.png"),
-					new FileFilter("所有文件(*.*)", "*.*")
-				]);
-				/* var upload:Upload=new Upload();
-				upload.maxImageNum=Constants.maxUploadImageNum-max;
-				upload.addEventListener(CloseEvent.CLOSE,function():void{
-					PopUpManager.removePopUp(upload);   
-				});
-				PopUpManager.addPopUp(upload, this, true);    
-				PopUpManager.centerPopUp(upload); */ 
-				
 			}
 			
 			private function fileSelectHandler(event:Event): void {
@@ -193,71 +87,162 @@
 				}
 			}
 			
+			private function ioErrorHandler(e:IOErrorEvent): void{
+				Alert.show(e.text);
+			}
+			
+			private function deleteImageView(event:HijobsEvent):void{
+				var num:int = images.numElements;
+				hasImageNum = 0;
+				for (var i:int = 0; i < num; i++) {
+					var element:IVisualElement = images.getElementAt(i);
+					if(element == event.data){
+						var url:String = (element as ImageView).url;
+						HttpConnection.request("file/"+url,{_method:URLRequestMethod.DELETE},function(obj:Object):void{
+							if(obj != null && obj.toString() == "true"){
+								images.removeElementAt(i);
+								hasImageNum--;
+							}else{
+								Alert.show("图片删除失败","错误",Alert.OK);
+							}
+						},URLRequestMethod.POST);	
+						break;
+					}
+				}
+			}
+			
+			protected function edit_clearHandler(event:Event=null):void
+			{
+				var company:CompanyDTO = getCompanyInfo();
+				company._method = URLRequestMethod.PUT;
+				HttpConnection.request("company/"+company["id"],company,function(obj:Object):void{
+					if(obj.rc.code>-1){
+						Alert.show("公司修改成功","提示",Alert.OK);
+					}else{
+						Alert.show(obj.rc.message,"错误",Alert.OK);
+					}
+				},URLRequestMethod.POST);		
+			}
+			
+			private function getCompanyInfo():CompanyDTO{
+				var companyDO:CompanyDTO = new CompanyDTO();
+				if(company != null)
+					companyDO.id = company["id"];
+				companyDO.fullName = StringUtil.trim(fullName.text);
+				companyDO.mobile = StringUtil.trim(mobile.text);
+				companyDO.tel = StringUtil.trim(tel.text);
+				companyDO.address = StringUtil.trim(address.text);
+				companyDO.size = StringUtil.trim(size.text);
+				companyDO.nature = StringUtil.trim(nature.text);
+				companyDO.industry = StringUtil.trim(industry.text);
+				companyDO.profile = StringUtil.trim(profile.text);
+				var arr:Array=[];
+				var num:int = images.numElements;
+				for (var i:int = 0; i < num; i++) {
+					var element:IVisualElement = images.getElementAt(i);
+					if(element is ImageView){
+						var image:ImageView = element  as ImageView;
+						arr.push(image.url);
+					}
+				}
+				companyDO.imageUrls=arr.join("|");
+				return companyDO;
+			}
+			
+			protected function addImage_clickHandler(event:MouseEvent):void
+			{
+				var num:int = images.numElements;
+				hasImageNum = 0;
+				for (var i:int = 0; i < num; i++) {
+					var element:IVisualElement = images.getElementAt(i);
+					if(element is ImageView){
+						hasImageNum++;
+					}
+				}
+				
+				if(hasImageNum>=Constants.maxUploadImageNum){
+					Alert.show("上传数量不能超过 "+Constants.maxUploadImageNum+" 张","警告",Alert.OK);
+					return;
+				}
+				
+				fileRefs.browse([new FileFilter("Images (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg;*.jpeg;*.gif;*.png"),
+					new FileFilter("所有文件(*.*)", "*.*")
+				]); 
+				/* var upload:Upload=new Upload();
+				upload.maxImageNum=Constants.maxUploadImageNum;
+				upload.addEventListener(CloseEvent.CLOSE,function():void{
+				PopUpManager.removePopUp(upload);   
+				});
+				PopUpManager.addPopUp(upload, this, true);    
+				PopUpManager.centerPopUp(upload); */  
+				
+			}
+			
+			protected function titlewindow1_creationCompleteHandler(event:FlexEvent):void {
+				fileRefs.addEventListener(Event.SELECT, fileSelectHandler);
+				fileRefs.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				HijobsEvent.dis.addEventListener(HijobsEvent.IMAGEVIEW_DELETE,deleteImageView);				
+			}
+			
+			protected function titlewindow1_closeHandler(event:CloseEvent):void{
+				PopUpManager.removePopUp(this);   
+			}
+			
+			protected function commit_clickHandler(event:MouseEvent):void
+			{
+				if(company == null){
+					add_clickHandler();
+				}else{
+					edit_clearHandler();
+				}
+					
+			}
+			
 		]]>
 	</fx:Script>
-	<s:HGroup width="100%">
-		<s:HGroup width="100%">
-			<s:TextInput id="companyKey" width="200" prompt="请输入公司名称"/>
-			<s:Button label="搜索公司" click="companySearch(event)"/>
+	<s:VGroup width="100%" height="100%" top="10" bottom="10">
+		<s:TileGroup width="100%" height="100%" horizontalGap="30" columnAlign="left" columnWidth="300" id="details" requestedColumnCount="3">
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="公司名称" width="100" textAlign="left"/>
+				<s:TextInput id="fullName" width="200"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="公司mobile" width="100" textAlign="left"/>
+				<s:TextInput id="mobile" width="200"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="公司tel" width="100" textAlign="left"/>
+				<s:TextInput id="tel" width="200"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="公司地址" width="100" textAlign="left"/>
+				<s:TextInput id="address" width="200"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="公司规模" width="100" textAlign="left"/>
+				<s:TextInput id="size" width="200"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="公司性质" width="100" textAlign="left"/>
+				<s:TextInput id="nature" width="200"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="公司行业" width="100" textAlign="left"/>
+				<s:TextInput id="industry" width="200"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="公司简介" width="100" textAlign="left"/>
+				<s:TextInput id="profile" width="200"/>
+			</s:HGroup>
+		</s:TileGroup>
+		<s:HGroup verticalAlign="middle" id="images">
+			<s:Label text="公司图片：" width="100" textAlign="left"/>
+			<s:Button label="添加" click="addImage_clickHandler(event)"/>
 		</s:HGroup>
-	</s:HGroup>
-	<mx:DataGrid id="companyDG" height="100%" width="100%" change="companyDG_changeHandler(event)" itemClick="companyDG_changeHandler(event)">
-		<mx:columns>
-			<mx:DataGridColumn dataField="fullName"/>
-			<mx:DataGridColumn dataField="mobile"/>
-			<mx:DataGridColumn dataField="tel"/>
-			<mx:DataGridColumn dataField="address"/>
-			<mx:DataGridColumn dataField="size"/>
-			<mx:DataGridColumn dataField="nature"/>
-			<mx:DataGridColumn dataField="industry"/>
-			<mx:DataGridColumn dataField="profile"/>
-			<mx:DataGridColumn dataField="gmtModified" labelFunction="{Utils.dateFormatFunction}"/>
-			<mx:DataGridColumn dataField="gmtCreated" labelFunction="{Utils.dateFormatFunction}"/>
-			<mx:DataGridColumn dataField="isDel"/>
-		</mx:columns>
-	</mx:DataGrid>
-	<views:PagerGroup width="100%" id="pg"/>
-	<s:TileGroup width="100%" horizontalGap="30" columnAlign="left" columnWidth="300" id="details" height="60">
-		<s:HGroup verticalAlign="middle">
-			<s:Label text="公司名称" width="100" textAlign="left"/>
-			<s:TextInput id="fullName" width="200"/>
+		<s:HGroup verticalAlign="middle" horizontalAlign="center" width="100%">
+			<s:Button label="提交" click="commit_clickHandler(event)"/>
+			<s:Button label="取消" click="{dispatchEvent(new CloseEvent(CloseEvent.CLOSE))}"/>
 		</s:HGroup>
-		<s:HGroup verticalAlign="middle">
-			<s:Label text="公司mobile" width="100" textAlign="left"/>
-			<s:TextInput id="mobile" width="200"/>
-		</s:HGroup>
-		<s:HGroup verticalAlign="middle">
-			<s:Label text="公司tel" width="100" textAlign="left"/>
-			<s:TextInput id="tel" width="200"/>
-		</s:HGroup>
-		<s:HGroup verticalAlign="middle">
-			<s:Label text="公司地址" width="100" textAlign="left"/>
-			<s:TextInput id="address" width="200"/>
-		</s:HGroup>
-		<s:HGroup verticalAlign="middle">
-			<s:Label text="公司规模" width="100" textAlign="left"/>
-			<s:TextInput id="size" width="200"/>
-		</s:HGroup>
-		<s:HGroup verticalAlign="middle">
-			<s:Label text="公司性质" width="100" textAlign="left"/>
-			<s:TextInput id="nature" width="200"/>
-		</s:HGroup>
-		<s:HGroup verticalAlign="middle">
-			<s:Label text="公司行业" width="100" textAlign="left"/>
-			<s:TextInput id="industry" width="200"/>
-		</s:HGroup>
-		<s:HGroup verticalAlign="middle">
-			<s:Label text="公司简介" width="100" textAlign="left"/>
-			<s:TextInput id="profile" width="200"/>
-		</s:HGroup>
-	</s:TileGroup>
-	<s:HGroup verticalAlign="middle" id="images" visible="false" includeInLayout="false">
-		<s:Label text="公司图片：" width="100" textAlign="left"/>
-		<s:Button label="添加" click="addImage_clickHandler(event)"/>
-	</s:HGroup>
-	<s:HGroup width="100%" horizontalAlign="center" gap="50" height="30">
-		<s:Button label="添加公司" height="100%" click="add_clickHandler(event)"/>
-		<s:Button label="编辑公司" height="100%" click="edit_clearHandler(event)"/>
-		<s:Button label="删除公司" height="100%" click="delete_clickHandler(event)"/>
-	</s:HGroup>
-</s:VGroup>
+	</s:VGroup>
+</s:TitleWindow>

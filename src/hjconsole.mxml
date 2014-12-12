@@ -25,9 +25,9 @@
 	<s:VGroup width="100%" height="100%">
 		<s:ButtonBar id="bar" dataProvider="{buttonBar}" selectedIndex="0" height="30" width="100%" requireSelection="true"/>
 		<s:Group width="100%" height="100%"> 
-			<views:UserView width="100%" height="100%" visible="{bar.selectedIndex==0}"/>
-			<views:JobView width="100%" height="100%" visible="{bar.selectedIndex==1}"/>
-			<views:CompanyView width="100%" height="100%" visible="{bar.selectedIndex==2}"/>
+			<views:UserList width="100%" height="100%" visible="{bar.selectedIndex==0}"/>
+			<views:JobList width="100%" height="100%" visible="{bar.selectedIndex==1}"/>
+			<views:CompanyList width="100%" height="100%" visible="{bar.selectedIndex==2}"/>
 		</s:Group>
 	</s:VGroup>
 		

@@ -20,6 +20,9 @@
     <application path="image.mxml">
       <airExcludes/>
     </application>
+    <application path="FilesUpload.mxml">
+      <airExcludes/>
+    </application>
   </applications>
   <modules/>
   <buildCSSFiles/>
