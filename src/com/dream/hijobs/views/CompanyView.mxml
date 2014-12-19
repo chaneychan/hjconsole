@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
-			   xmlns:s="library://ns.adobe.com/flex/spark" 
-			   xmlns:mx="library://ns.adobe.com/flex/mx" 
-			   width="978" height="472" 
-			   creationComplete="titlewindow1_creationCompleteHandler(event)"
-			   close="titlewindow1_closeHandler(event)">
+<component:BaseTitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+						   xmlns:s="library://ns.adobe.com/flex/spark" 
+						   xmlns:mx="library://ns.adobe.com/flex/mx" 
+						   xmlns:component="com.dream.hijobs.component.*" width="972" height="478"
+						   creationComplete="titlewindow1_creationCompleteHandler(event)">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 	</fx:Declarations>
@@ -32,7 +31,7 @@
 			{
 				return _company;
 			}
-
+			
 			public function set company(value:Object):void
 			{
 				if(value==null){
@@ -61,14 +60,15 @@
 						}
 					}
 				}
-					
+				
 			}
-
+			
 			protected function add_clickHandler(event:MouseEvent=null):void
 			{
 				HttpConnection.request("company",getCompanyInfo(),function(obj:Object):void{
 					if(obj.rc.code>-1){
 						Alert.show("公司添加成功","提示",Alert.OK);
+						close();
 					}else{
 						Alert.show(obj.rc.message,"错误",Alert.OK);
 					}
@@ -118,6 +118,7 @@
 				HttpConnection.request("company/"+company["id"],company,function(obj:Object):void{
 					if(obj.rc.code>-1){
 						Alert.show("公司修改成功","提示",Alert.OK);
+						close();
 					}else{
 						Alert.show(obj.rc.message,"错误",Alert.OK);
 					}
@@ -185,10 +186,6 @@
 				HijobsEvent.dis.addEventListener(HijobsEvent.IMAGEVIEW_DELETE,deleteImageView);				
 			}
 			
-			protected function titlewindow1_closeHandler(event:CloseEvent):void{
-				PopUpManager.removePopUp(this);   
-			}
-			
 			protected function commit_clickHandler(event:MouseEvent):void
 			{
 				if(company == null){
@@ -196,7 +193,7 @@
 				}else{
 					edit_clearHandler();
 				}
-					
+				
 			}
 			
 		]]>
@@ -209,11 +206,11 @@
 			</s:HGroup>
 			<s:HGroup verticalAlign="middle">
 				<s:Label text="公司mobile" width="100" textAlign="left"/>
-				<s:TextInput id="mobile" width="200"/>
+				<s:TextInput id="mobile" width="200" restrict="0-9"/>
 			</s:HGroup>
 			<s:HGroup verticalAlign="middle">
 				<s:Label text="公司tel" width="100" textAlign="left"/>
-				<s:TextInput id="tel" width="200"/>
+				<s:TextInput id="tel" width="200" restrict="0-9"/>
 			</s:HGroup>
 			<s:HGroup verticalAlign="middle">
 				<s:Label text="公司地址" width="100" textAlign="left"/>
@@ -242,7 +239,7 @@
 		</s:HGroup>
 		<s:HGroup verticalAlign="middle" horizontalAlign="center" width="100%">
 			<s:Button label="提交" click="commit_clickHandler(event)"/>
-			<s:Button label="取消" click="{dispatchEvent(new CloseEvent(CloseEvent.CLOSE))}"/>
+			<s:Button label="取消" click="{close()}"/>
 		</s:HGroup>
 	</s:VGroup>
-</s:TitleWindow>
+</component:BaseTitleWindow>

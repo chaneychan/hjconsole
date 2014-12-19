@@ -3,7 +3,7 @@
 		  xmlns:s="library://ns.adobe.com/flex/spark" 
 		  xmlns:mx="library://ns.adobe.com/flex/mx" 
 		  width="100%" height="100%" xmlns:views="com.dream.hijobs.views.*"
-		  creationComplete="vgroup1_creationCompleteHandler(event)">
+		  creationComplete="vgroup1_creationCompleteHandler(event)" xmlns:component="com.dream.hijobs.component.*">
 	<fx:Declarations>
 		
 	</fx:Declarations>
@@ -24,7 +24,7 @@
 			import mx.managers.PopUpManager;
 			import mx.utils.StringUtil;
 			
-			protected function companySearch(event:*):void
+			protected function companySearch(event:*=null):void
 			{
 				searchFun(1);
 			}
@@ -80,12 +80,11 @@
 					Alert.show("没有选数据","警告",Alert.OK);
 				}
 			}
-			
 		]]>
 	</fx:Script>
 	<s:HGroup width="100%">
 		<s:HGroup width="100%">
-			<s:TextInput id="companyKey" width="200" prompt="请输入公司名称"/>
+			<s:TextInput id="companyKey" width="200" prompt="请输入公司名称..." keyUp="companySearch(event)"/>
 			<s:Button label="搜索公司" click="companySearch(event)"/>
 		</s:HGroup>
 		<s:HGroup>
@@ -109,5 +108,5 @@
 			<mx:DataGridColumn dataField="isDel"/>
 		</mx:columns>
 	</mx:DataGrid>
-	<views:PagerGroup width="100%" id="pg"/>
+	<component:PagerGroup width="100%" id="pg"/>
 </s:VGroup>

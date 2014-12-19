@@ -13,7 +13,7 @@
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.utils.StringUtil;
-			protected function jobSearch(event:*):void
+			protected function jobSearch(event:*=null):void
 			{
 				var key:String = StringUtil.trim(jobKey.text);
 				var obj:Object={key:key};
@@ -29,12 +29,13 @@
 					Alert.show(obj.rc.message,"错误",Alert.OK);
 				}
 			}
+			
 		]]>
 	</fx:Script>
 
 	<s:HGroup width="100%">
 		<s:HGroup width="100%" left="0">
-			<s:TextInput id="jobKey" width="200" prompt="请输入职位名..." restrict="0-9"/>
+			<s:TextInput id="jobKey" width="200" prompt="请输入职位名..." keyUp="jobSearch(event)"/>
 			<s:Button label="搜索职位" click="jobSearch(event)"/>
 		</s:HGroup>
 		<s:HGroup>
